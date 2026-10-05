@@ -1,17 +1,25 @@
 import pickle
+import os
 import numpy as np
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 import pandas as pd
 
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "model.pkl")
+TEST_DATA_PATH = os.path.join(BASE_DIR, "BANK LOAN_test.csv")   
+
+ # Load model
+with open(MODEL_PATH, "rb") as f:
+        model = pickle.load(f)
+        
+
 app = FastAPI()
 
 def get_test_results():
     
-    # Load model
-    with open("model.pkl", "rb") as f:
-        model = pickle.load(f)
-    df_test = pd.read_csv("BANK LOAN_test.csv")
+    df_test = pd.read_csv(TEST_DATA_PATH)
 
     X_val = df_test.drop(["DEFAULTER", "SN"], axis=1)
 
@@ -94,31 +102,61 @@ def home():
         </table>
 
         <script>
-            function loadData() {
-                fetch('/predict')
-                    .then(response => response.json())
-                    .then(data => {
-                        const tbody = document.querySelector('#DataTable tbody');
-                        tbody.innerHTML = '';
+            async function loadData() {
 
-                        data.forEach(row => {
-                            const tr = document.createElement('tr');
-                            tr.innerHTML = `
-                                <td>${row.AGE}</td>
-                                <td>${row.EMPLOY}</td>
-                                <td>${row.ADDRESS}</td>
-                                <td>${row.DEBTINC}</td>
-                                <td>${row.CREDDEBT}</td>
-                                <td>${row.OTHDEBT}</td>
-                                <td>${row["Default_Probability_%"]}</td>
-                            `;
-                            tbody.appendChild(tr);
-                        });
-                    })
-                    .catch(error => {
-                        alert('Error fetching data');
-                        console.error(error);
+                const errorDiv = document.getElementById('error');
+                errorDiv.innerHTML = '';
+
+                try {
+
+                    const response = await fetch('/predict');
+
+                    const text = await response.text();
+
+                    console.log("Status:", response.status);
+                    console.log("Response:", text);
+
+                    if (!response.ok) {
+                        throw new Error(
+                            `HTTP ${response.status}: ${text}`
+                        );
+                    }
+
+                    const data = JSON.parse(text);
+
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+
+                    const tbody =
+                        document.querySelector('#DataTable tbody');
+
+                    tbody.innerHTML = '';
+
+                    data.forEach(row => {
+
+                        const tr = document.createElement('tr');
+
+                        tr.innerHTML = `
+                            <td>${row.AGE}</td>
+                            <td>${row.EMPLOY}</td>
+                            <td>${row.ADDRESS}</td>
+                            <td>${row.DEBTINC}</td>
+                            <td>${row.CREDDEBT}</td>
+                            <td>${row.OTHDEBT}</td>
+                            <td>${row["Default_Probability_%"]}</td>
+                        `;
+
+                        tbody.appendChild(tr);
                     });
+
+                } catch (error) {
+
+                    console.error(error);
+
+                    errorDiv.innerHTML =
+                        "Error: " + error.message;
+                }
             }
         </script>
 
