@@ -9,8 +9,8 @@ from sklearn.ensemble import RandomForestClassifier
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TRAIN_DATA_PATH = os.path.join(BASE_DIR, "BANK LOAN.csv")
-TEST_DATA_PATH = os.path.join(BASE_DIR, "BANK LOAN_test.csv")   
-
+TEST_DATA_PATH = os.path.join(BASE_DIR, "BANK LOAN_TEST.csv")   
+MODEL_PATH = os.path.join(BASE_DIR, "model.pkl")   
 def train_model():
     df = pd.read_csv(TRAIN_DATA_PATH)
     df.drop(columns = ['SN'],inplace = True)
@@ -40,7 +40,8 @@ def train_model():
     return(model)
 
 #Train Model Once        
-model = train_model()  
+with open(MODEL_PATH, "rb") as f:
+    model = pickle.load(f)  
 
 app = FastAPI()
 
@@ -129,32 +130,41 @@ def home():
         </table>
 
         <script>
-            function loadData() {
-                fetch('/predict')
-                    .then(response => response.json())
-                    .then(data => {
-                        const tbody = document.querySelector('#DataTable tbody');
-                        tbody.innerHTML = '';
+            async function loadData() {
+            try {
+                const response = await fetch('/predict');
+                const data = await response.json();
 
-                        data.forEach(row => {
-                            const tr = document.createElement('tr');
-                            tr.innerHTML = `
-                                <td>${row.AGE}</td>
-                                <td>${row.EMPLOY}</td>
-                                <td>${row.ADDRESS}</td>
-                                <td>${row.DEBTINC}</td>
-                                <td>${row.CREDDEBT}</td>
-                                <td>${row.OTHDEBT}</td>
-                                <td>${row["Default_Probability_%"]}</td>
-                            `;
-                            tbody.appendChild(tr);
-                        });
-                    })
-                    .catch(error => {
-                        alert('Error fetching data');
-                        console.error(error);
-                    });
+                console.log("Response:", data);
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                const tbody = document.querySelector('#DataTable tbody');
+                tbody.innerHTML = '';
+
+                data.forEach(row => {
+                    const tr = document.createElement('tr');
+
+                    tr.innerHTML = `
+                        <td>${row.AGE}</td>
+                        <td>${row.EMPLOY}</td>
+                        <td>${row.ADDRESS}</td>
+                        <td>${row.DEBTINC}</td>
+                        <td>${row.CREDDEBT}</td>
+                        <td>${row.OTHDEBT}</td>
+                        <td>${row["Default_Probability_%"]}</td>
+                    `;
+
+                    tbody.appendChild(tr);
+                });
+
+            } catch (error) {
+                alert("Error: " + error.message);
+                console.error(error);
             }
+        }
         </script>
 
     </body>
