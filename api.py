@@ -7,13 +7,39 @@ import pandas as pd
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "model.pkl")
+TRAIN_DATA_PATH = os.path.join(BASE_DIR, "BANK LOAN.pkl")
 TEST_DATA_PATH = os.path.join(BASE_DIR, "BANK LOAN_test.csv")   
 
- # Load model
-with open(MODEL_PATH, "rb") as f:
-        model = pickle.load(f)
-        
+def train_model():
+    df = pd.read_csv(TRAIN_DATA_PATH)
+    df.drop(columns = ['SN'],inplace = True)
+
+    # -----------------------------
+    # 2. Features & Target
+    # -----------------------------
+    X = df.drop("DEFAULTER", axis=1)
+    y = df["DEFAULTER"]
+
+    # -----------------------------
+    # 3. Train-Test Split (good practice)
+    # -----------------------------
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42
+    )
+
+    model = RandomForestClassifier(
+        n_estimators=500,
+        oob_score=True,
+        random_state=42,
+        n_jobs=-1
+    )
+
+
+    model.fit(X_train, y_train)
+    return(model)
+
+#Train Model Once        
+model = train_model()
 
 app = FastAPI()
 
