@@ -4,5 +4,5 @@ fastapi
 uvicorn
 pandas
 python-multipart
-sklearn
+scikit-learn
 matplotlib
