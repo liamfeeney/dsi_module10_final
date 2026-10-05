@@ -4,42 +4,12 @@ import numpy as np
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-TRAIN_DATA_PATH = os.path.join(BASE_DIR, "BANK LOAN.csv")
 TEST_DATA_PATH = os.path.join(BASE_DIR, "BANK LOAN_TEST.csv")   
 MODEL_PATH = os.path.join(BASE_DIR, "model.pkl")   
-def train_model():
-    df = pd.read_csv(TRAIN_DATA_PATH)
-    df.drop(columns = ['SN'],inplace = True)
 
-    # -----------------------------
-    # 2. Features & Target
-    # -----------------------------
-    X = df.drop("DEFAULTER", axis=1)
-    y = df["DEFAULTER"]
-
-    # -----------------------------
-    # 3. Train-Test Split (good practice)
-    # -----------------------------
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42
-    )
-
-    model = RandomForestClassifier(
-        n_estimators=500,
-        oob_score=True,
-        random_state=42,
-        n_jobs=-1
-    )
-
-
-    model.fit(X_train, y_train)
-    return(model)
-
-#Train Model Once        
+#Load Model Once        
 with open(MODEL_PATH, "rb") as f:
     model = pickle.load(f)  
 
