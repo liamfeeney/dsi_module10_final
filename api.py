@@ -5,9 +5,15 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 import pandas as pd
 
+ # Load model
+with open("model.pkl", "rb") as f:
+        model = pickle.load(f)
+
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-TRAIN_DATA_PATH = os.path.join(BASE_DIR, "BANK LOAN.pkl")
+TRAIN_DATA_PATH = os.path.join(BASE_DIR, "BANK LOAN.csv")
 TEST_DATA_PATH = os.path.join(BASE_DIR, "BANK LOAN_test.csv")   
 
 def train_model():
@@ -39,7 +45,7 @@ def train_model():
     return(model)
 
 #Train Model Once        
-model = train_model()
+model = train_model()  
 
 app = FastAPI()
 
@@ -128,61 +134,31 @@ def home():
         </table>
 
         <script>
-            async function loadData() {
+            function loadData() {
+                fetch('/predict')
+                    .then(response => response.json())
+                    .then(data => {
+                        const tbody = document.querySelector('#DataTable tbody');
+                        tbody.innerHTML = '';
 
-                const errorDiv = document.getElementById('error');
-                errorDiv.innerHTML = '';
-
-                try {
-
-                    const response = await fetch('/predict');
-
-                    const text = await response.text();
-
-                    console.log("Status:", response.status);
-                    console.log("Response:", text);
-
-                    if (!response.ok) {
-                        throw new Error(
-                            `HTTP ${response.status}: ${text}`
-                        );
-                    }
-
-                    const data = JSON.parse(text);
-
-                    if (data.error) {
-                        throw new Error(data.error);
-                    }
-
-                    const tbody =
-                        document.querySelector('#DataTable tbody');
-
-                    tbody.innerHTML = '';
-
-                    data.forEach(row => {
-
-                        const tr = document.createElement('tr');
-
-                        tr.innerHTML = `
-                            <td>${row.AGE}</td>
-                            <td>${row.EMPLOY}</td>
-                            <td>${row.ADDRESS}</td>
-                            <td>${row.DEBTINC}</td>
-                            <td>${row.CREDDEBT}</td>
-                            <td>${row.OTHDEBT}</td>
-                            <td>${row["Default_Probability_%"]}</td>
-                        `;
-
-                        tbody.appendChild(tr);
+                        data.forEach(row => {
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td>${row.AGE}</td>
+                                <td>${row.EMPLOY}</td>
+                                <td>${row.ADDRESS}</td>
+                                <td>${row.DEBTINC}</td>
+                                <td>${row.CREDDEBT}</td>
+                                <td>${row.OTHDEBT}</td>
+                                <td>${row["Default_Probability_%"]}</td>
+                            `;
+                            tbody.appendChild(tr);
+                        });
+                    })
+                    .catch(error => {
+                        alert('Error fetching data');
+                        console.error(error);
                     });
-
-                } catch (error) {
-
-                    console.error(error);
-
-                    errorDiv.innerHTML =
-                        "Error: " + error.message;
-                }
             }
         </script>
 
