@@ -4,12 +4,6 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 import pandas as pd
 
-# Load model
-with open("model.pkl", "rb") as f:
-    model = pickle.load(f)
-
-
-
 app = FastAPI()
 
 def get_test_results():
