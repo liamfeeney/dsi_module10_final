@@ -4,11 +4,6 @@ import numpy as np
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 import pandas as pd
-
- # Load model
-with open("model.pkl", "rb") as f:
-        model = pickle.load(f)
-
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 
